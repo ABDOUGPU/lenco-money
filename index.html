@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#070b19] text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>LENCO Operations | Expense Terminal</title>
+  
+  <!-- Apple Safari Standalone PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LENCO Terminal">
+  <meta name="theme-color" content="#070b19">
+  
+  <!-- Google Fonts: Inter & Montserrat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            lenco: {
+              navy: '#0a1128',
+              surface: '#0e1a40',
+              card: '#132252',
+              border: '#1e3373',
+              red: '#e63946',
+              redDark: '#b91c1c',
+              redHover: '#dc2626',
+              accent: '#38bdf8'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['Montserrat', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      overscroll-behavior-y: none;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #070b19;
+      background-image: 
+        radial-gradient(at 100% 0%, rgba(230, 57, 70, 0.08) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(14, 26, 64, 0.4) 0px, transparent 60%);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .glass-card {
+      background: rgba(14, 26, 64, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card-elevated {
+      background: linear-gradient(180deg, rgba(19, 34, 82, 0.85) 0%, rgba(10, 17, 40, 0.95) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+  </style>
+</head>
+<body class="h-full select-none flex flex-col justify-between font-sans antialiased text-slate-100">
+
+  <!-- TOP APP BAR -->
+  <header class="pt-10 pb-3 px-5 border-b border-lenco-border/40 bg-[#070b19]/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <!-- LENCO Emblem Badge (Navy / Red engineering seal) -->
+        <div class="h-9 px-2.5 rounded-xl bg-gradient-to-br from-[#0e1a40] to-[#070b19] border border-lenco-red/40 flex items-center justify-center gap-1.5 shadow-md shadow-lenco-red/10">
+          <span class="font-display font-black tracking-tighter text-white text-base">LENCO</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-lenco-red animate-pulse"></span>
+        </div>
+        <div>
+          <h1 class="text-[10px] tracking-widest uppercase font-bold text-slate-400 font-display">Liber Energy Contractor</h1>
+          <p class="text-xs font-semibold tracking-tight text-slate-200 flex items-center gap-1.5">
+            Internal Expense Terminal
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="pwaHelpBtn" class="p-2 rounded-xl bg-lenco-surface/80 border border-lenco-border text-slate-300 hover:text-white transition active:scale-95" title="Add to Home Screen (Safari/Chrome)">
+          <i data-lucide="share" class="w-4 h-4"></i>
+        </button>
+        <button id="configBtn" class="p-2 rounded-xl bg-lenco-surface/80 border border-lenco-border text-slate-300 hover:text-white transition active:scale-95" title="Settings & Webhook">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN SCROLLABLE CONTENT AREA -->
+  <main class="flex-1 overflow-y-auto no-scrollbar pb-24 px-4 pt-3.5 space-y-4">
+
+    <!-- KPI STATS CARDS -->
+    <div class="grid grid-cols-3 gap-2.5">
+      <div class="glass-card p-3 rounded-2xl flex flex-col justify-between shadow-sm">
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 font-display">Today</span>
+        <div class="mt-1">
+          <span id="statToday" class="text-base font-bold font-mono tracking-tight text-white">0.000</span>
+          <span class="text-[10px] text-slate-400 ml-0.5">TND</span>
+        </div>
+      </div>
+      <div class="glass-card p-3 rounded-2xl flex flex-col justify-between shadow-sm border-l-2 border-l-lenco-accent">
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 font-display">This Week</span>
+        <div class="mt-1">
+          <span id="statWeek" class="text-base font-bold font-mono tracking-tight text-slate-100">0.000</span>
+          <span class="text-[10px] text-slate-400 ml-0.5">TND</span>
+        </div>
+      </div>
+      <div class="glass-card p-3 rounded-2xl flex flex-col justify-between shadow-sm border-l-2 border-l-lenco-red">
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 font-display">This Month</span>
+        <div class="mt-1">
+          <span id="statMonth" class="text-base font-bold font-mono tracking-tight text-lenco-red">0.000</span>
+          <span class="text-[10px] text-slate-400 ml-0.5">TND</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK LOG EXPENSE SECTION -->
+    <section class="glass-card-elevated p-4 sm:p-5 rounded-3xl shadow-xl relative overflow-hidden">
+      <!-- Glow ambient effect with corporate red/navy tint -->
+      <div class="absolute -top-12 -right-12 w-32 h-32 bg-lenco-red/10 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs uppercase font-bold tracking-wider text-slate-300 flex items-center gap-2 font-display">
+          <i data-lucide="receipt" class="w-4 h-4 text-lenco-red"></i> Quick Expense Log
+        </span>
+        <span id="syncBadge" class="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-900/90 text-slate-400 border border-slate-700/80 font-mono flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400" id="syncDot"></span>
+          <span id="syncBadgeText">Local Storage</span>
+        </span>
+      </div>
+
+      <!-- AMOUNT DISPLAY & DIRECT INPUT -->
+      <div class="my-3 text-center">
+        <label for="amountInput" class="block text-[11px] text-slate-400 font-medium mb-1">Enter Amount (TND)</label>
+        <div class="relative inline-flex items-baseline justify-center">
+          <input 
+            type="number" 
+            step="0.001" 
+            id="amountInput" 
+            placeholder="0.000" 
+            class="bg-transparent text-center text-4xl sm:text-5xl font-extrabold font-mono text-white placeholder-slate-600 outline-none w-full tracking-tight"
+            inputmode="decimal"
+            autocomplete="off"
+          >
+          <span class="text-sm font-bold text-lenco-red ml-1.5 font-display">TND</span>
+        </div>
+
+        <!-- QUICK PRESET STEPPERS -->
+        <div class="flex justify-center items-center gap-1.5 mt-2">
+          <button type="button" class="preset-btn px-2.5 py-1 rounded-lg bg-lenco-surface/90 border border-lenco-border text-[11px] font-mono text-slate-300 hover:text-white hover:border-lenco-red/60 active:scale-95 transition" data-val="10">+10</button>
+          <button type="button" class="preset-btn px-2.5 py-1 rounded-lg bg-lenco-surface/90 border border-lenco-border text-[11px] font-mono text-slate-300 hover:text-white hover:border-lenco-red/60 active:scale-95 transition" data-val="20">+20</button>
+          <button type="button" class="preset-btn px-2.5 py-1 rounded-lg bg-lenco-surface/90 border border-lenco-border text-[11px] font-mono text-slate-300 hover:text-white hover:border-lenco-red/60 active:scale-95 transition" data-val="50">+50</button>
+          <button type="button" class="preset-btn px-2.5 py-1 rounded-lg bg-lenco-surface/90 border border-lenco-border text-[11px] font-mono text-slate-300 hover:text-white hover:border-lenco-red/60 active:scale-95 transition" data-val="100">+100</button>
+          <button type="button" id="clearAmountBtn" class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[11px] text-slate-400 hover:text-slate-200 active:scale-95 transition">C</button>
+        </div>
+      </div>
+
+      <!-- CATEGORY CHIPS (6 PRIMARY INDUSTRIAL TIERS) -->
+      <div class="space-y-1.5 mb-3">
+        <span class="text-[11px] text-slate-400 font-medium">Category</span>
+        <div class="grid grid-cols-3 gap-1.5" id="categoryChips">
+          <button type="button" data-cat="Fuel & Transport" class="cat-chip py-2 px-1 rounded-xl bg-lenco-surface/60 border border-lenco-border text-slate-200 text-xs flex flex-col items-center gap-1 transition active:scale-95">
+            <span class="text-base">⛽</span>
+            <span class="text-[10px] font-medium leading-none truncate w-full text-center">Fuel</span>
+          </button>
+          <button type="button" data-cat="Equipment & Parts" class="cat-chip py-2 px-1 rounded-xl bg-lenco-surface/60 border border-lenco-border text-slate-200 text-xs flex flex-col items-center gap-1 transition active:scale-95">
+            <span class="text-base">🔧</span>
+            <span class="text-[10px] font-medium leading-none truncate w-full text-center">Equipment</span>
+          </button>
+          <button type="button" data-cat="Site Meals" class="cat-chip py-2 px-1 rounded-xl bg-lenco-surface/60 border border-lenco-border text-slate-200 text-xs flex flex-col items-center gap-1 transition active:scale-95">
+            <span class="text-base">🍽️</span>
+            <span class="text-[10px] font-medium leading-none truncate w-full text-center">Meals</span>
+          </button>
+          <button type="button" data-cat="Logistics & Freight" class="cat-chip py-2 px-1 rounded-xl bg-lenco-surface/60 border border-lenco-border text-slate-200 text-xs flex flex-col items-center gap-1 transition active:scale-95">
+            <span class="text-base">📦</span>
+            <span class="text-[10px] font-medium leading-none truncate w-full text-center">Logistics</span>
+          </button>
+          <button type="button" data-cat="Office & Admin" class="cat-chip py-2 px-1 rounded-xl bg-lenco-surface/60 border border-lenco-border text-slate-200 text-xs flex flex-col items-center gap-1 transition active:scale-95">
+            <span class="text-base">🏢</span>
+            <span class="text-[10px] font-medium leading-none truncate w-full text-center">Office</span>
+          </button>
+          <button type="button" data-cat="Miscellaneous" class="cat-chip py-2 px-1 rounded-xl bg-lenco-surface/60 border border-lenco-border text-slate-200 text-xs flex flex-col items-center gap-1 transition active:scale-95">
+            <span class="text-base">⚙️</span>
+            <span class="text-[10px] font-medium leading-none truncate w-full text-center">Divers</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PAYMENT METHOD TOGGLE -->
+      <div class="mb-3">
+        <div class="grid grid-cols-2 p-1 bg-[#0a1128] border border-lenco-border/70 rounded-xl">
+          <button type="button" id="payMethodCash" class="pay-toggle py-1.5 rounded-lg text-xs font-semibold transition bg-lenco-card text-white border border-lenco-border shadow">
+            💵 Cash (Espèces)
+          </button>
+          <button type="button" id="payMethodCheck" class="pay-toggle py-1.5 rounded-lg text-xs font-semibold text-slate-400 transition">
+            💳 Company Check / Card
+          </button>
+        </div>
+      </div>
+
+      <!-- NOTE / VENDOR & TIME FIELD -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3.5">
+        <div>
+          <input 
+            type="text" 
+            id="vendorNote" 
+            placeholder="Vendor / Note (e.g. Total Station, STEG, Hardware)" 
+            class="w-full bg-[#0a1128] border border-lenco-border rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-lenco-red transition"
+          >
+        </div>
+        <div>
+          <input 
+            type="datetime-local" 
+            id="entryDateTime" 
+            class="w-full bg-[#0a1128] border border-lenco-border rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-lenco-red transition"
+          >
+        </div>
+      </div>
+
+      <!-- RECORD BUTTON (LENCO Engineering Red gradient) -->
+      <button 
+        type="button" 
+        id="recordExpenseBtn" 
+        class="w-full py-3.5 bg-gradient-to-r from-lenco-red to-lenco-redDark hover:from-lenco-redHover hover:to-lenco-red text-white font-display font-bold text-sm tracking-wide rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-lenco-red/25 active:scale-[0.98] transition cursor-pointer border border-red-500/30"
+      >
+        <i data-lucide="check-circle" class="w-4 h-4"></i>
+        <span>Commit Expense to Terminal</span>
+      </button>
+    </section>
+
+    <!-- EXPORT & SYNC CONTROL STRIP -->
+    <section class="flex gap-2">
+      <button 
+        type="button" 
+        id="exportExcelBtn" 
+        class="flex-1 py-2.5 px-3 bg-lenco-surface/70 hover:bg-lenco-surface border border-lenco-border rounded-2xl text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow-sm"
+      >
+        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+        <span>Export to Excel / CSV</span>
+      </button>
+
+      <button 
+        type="button" 
+        id="syncWebhookBtn" 
+        class="flex-1 py-2.5 px-3 bg-lenco-surface/70 hover:bg-lenco-surface border border-lenco-border rounded-2xl text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow-sm"
+      >
+        <i data-lucide="cloud-upload" class="w-4 h-4 text-lenco-accent"></i>
+        <span>Push to Google Sheet</span>
+      </button>
+    </section>
+
+    <!-- RECENT TRANSACTIONS LOG & FILTER BAR -->
+    <section class="space-y-2.5">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-display">
+          <i data-lucide="history" class="w-3.5 h-3.5 text-lenco-red"></i> Local Ledger Records
+        </h2>
+        <span id="recordCount" class="text-[11px] text-slate-400 font-mono">0 Entries</span>
+      </div>
+
+      <!-- FILTER TABS -->
+      <div class="flex items-center gap-1.5 bg-[#0a1128] p-1 rounded-xl border border-lenco-border/60 text-xs">
+        <button type="button" data-filter="all" class="filter-tab flex-1 py-1 rounded-lg text-white font-medium bg-lenco-card border border-lenco-border transition">All</button>
+        <button type="button" data-filter="today" class="filter-tab flex-1 py-1 rounded-lg text-slate-400 font-medium transition">Today</button>
+        <button type="button" data-filter="fuel" class="filter-tab flex-1 py-1 rounded-lg text-slate-400 font-medium transition">Fuel</button>
+        <button type="button" data-filter="equipment" class="filter-tab flex-1 py-1 rounded-lg text-slate-400 font-medium transition">Parts</button>
+      </div>
+
+      <!-- Feed Container -->
+      <div id="expenseList" class="space-y-2">
+        <!-- Rendered Dynamically -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM BAR / BRANDING -->
+  <footer class="py-2.5 px-4 bg-[#070b19]/95 border-t border-lenco-border/30 text-center text-[10px] text-slate-400 flex items-center justify-between">
+    <span class="font-display font-semibold tracking-wider text-slate-300">LENCO (Liber Energy Contractor)</span>
+    <span class="font-mono text-slate-400">Sandbox: Secure</span>
+  </footer>
+
+  <!-- MODAL: SETTINGS & GOOGLE SHEETS / N8N WEBHOOK CONFIG -->
+  <div id="configModal" class="fixed inset-0 z-50 bg-[#070b19]/85 backdrop-blur-md flex items-end sm:items-center justify-center hidden p-4">
+    <div class="bg-lenco-surface border border-lenco-border rounded-3xl w-full max-w-md p-5 space-y-4 shadow-2xl animate-in fade-in duration-200">
+      <div class="flex items-center justify-between border-b border-lenco-border pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="database" class="w-4 h-4 text-lenco-red"></i>
+          <h3 class="text-sm font-bold text-white font-display">Google Sheet & Webhook Bridge</h3>
+        </div>
+        <button id="closeConfigBtn" class="p-1 rounded-lg hover:bg-lenco-card text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Sync expenses directly to your enterprise Google Sheet via an <strong>n8n Webhook</strong> or <strong>Google Apps Script URL</strong>.
+      </p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-300 mb-1">Webhook Endpoint URL</label>
+          <input 
+            type="url" 
+            id="webhookUrlInput" 
+            placeholder="https://n8n.yourdomain.com/webhook/lenco-expenses" 
+            class="w-full bg-[#0a1128] border border-lenco-border rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-lenco-red"
+          >
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-300 mb-1">Device / Worker Identifier</label>
+          <input 
+            type="text" 
+            id="workerNameInput" 
+            placeholder="e.g. Field Unit 1 (Fedi)" 
+            class="w-full bg-[#0a1128] border border-lenco-border rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-lenco-red"
+          >
+        </div>
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button id="saveConfigBtn" class="flex-1 py-2.5 bg-gradient-to-r from-lenco-red to-lenco-redDark hover:from-lenco-redHover hover:to-lenco-red text-white font-display font-bold text-xs rounded-xl transition border border-red-500/30">
+          Save Settings
+        </button>
+        <button id="clearAllLogsBtn" class="py-2.5 px-3 bg-red-950/40 hover:bg-red-900/50 border border-red-800/60 text-red-400 text-xs font-semibold rounded-xl transition">
+          Wipe Local DB
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SAFARI SHORTCUT / ADD TO HOME SCREEN GUIDE -->
+  <div id="pwaHelpModal" class="fixed inset-0 z-50 bg-[#070b19]/85 backdrop-blur-md flex items-end sm:items-center justify-center hidden p-4">
+    <div class="bg-lenco-surface border border-lenco-border rounded-3xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-lenco-border pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="smartphone" class="w-4 h-4 text-lenco-red"></i>
+          <h3 class="text-sm font-bold text-white font-display">Install to Mobile Home Screen</h3>
+        </div>
+        <button id="closePwaHelpBtn" class="p-1 rounded-lg hover:bg-lenco-card text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300">
+        <div class="p-3 bg-[#0a1128] rounded-2xl border border-lenco-border space-y-1.5">
+          <p class="font-bold text-lenco-red flex items-center gap-1.5 font-display">
+            <i data-lucide="apple" class="w-3.5 h-3.5"></i> For iPhone / iPad (Safari):
+          </p>
+          <ol class="list-decimal list-inside space-y-1 text-slate-300">
+            <li>Open this page in <strong>Safari</strong>.</li>
+            <li>Tap the <strong>Share</strong> button (square with arrow up).</li>
+            <li>Scroll down and select <strong>"Add to Home Screen"</strong>.</li>
+            <li>Tap <strong>Add</strong>. Launches as a full-screen standalone app!</li>
+          </ol>
+        </div>
+
+        <div class="p-3 bg-[#0a1128] rounded-2xl border border-lenco-border space-y-1.5">
+          <p class="font-bold text-emerald-400 flex items-center gap-1.5 font-display">
+            <i data-lucide="play" class="w-3.5 h-3.5"></i> For Android (Chrome):
+          </p>
+          <ol class="list-decimal list-inside space-y-1 text-slate-300">
+            <li>Tap the <strong>three dots</strong> in Chrome.</li>
+            <li>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <button id="dismissHelpBtn" class="w-full py-2.5 bg-lenco-card hover:bg-lenco-border text-white font-semibold text-xs rounded-xl transition">
+        Got it
+      </button>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-lenco-surface border border-lenco-border text-xs text-white shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-3">
+    <i id="toastIcon" data-lucide="info" class="w-3.5 h-3.5 text-lenco-red"></i>
+    <span id="toastMsg">Notification</span>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC & LOCAL-FIRST CONTROLLER -->
+  <script>
+    // Storage Keys
+    const DB_KEY = 'lenco_expenses_ledger_v1';
+    const CFG_KEY = 'lenco_terminal_config_v1';
+
+    // State
+    let expenses = [];
+    let selectedCategory = 'Fuel & Transport';
+    let selectedPayMethod = 'Cash';
+    let currentFilter = 'all';
+
+    function refreshIcons() {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    function resetDateTimeField() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('entryDateTime').value = now.toISOString().slice(0, 16);
+    }
+
+    function playBeep(freq = 600, duration = 0.04) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function triggerHaptic() {
+      if (navigator.vibrate) {
+        navigator.vibrate(25);
+      }
+    }
+
+    function showToast(message, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.textContent = message;
+      toastIcon.setAttribute('data-lucide', isSuccess ? 'check-circle' : 'alert-circle');
+      toastIcon.className = `w-3.5 h-3.5 ${isSuccess ? 'text-emerald-400' : 'text-lenco-red'}`;
+      refreshIcons();
+
+      toast.classList.remove('opacity-0', '-translate-y-3', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-3', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2400);
+    }
+
+    function loadData() {
+      try {
+        const stored = localStorage.getItem(DB_KEY);
+        expenses = stored ? JSON.parse(stored) : [];
+      } catch (err) {
+        expenses = [];
+      }
+      renderLedger();
+      updateStatistics();
+      updateSyncStatusBadge();
+    }
+
+    function persistData() {
+      try {
+        localStorage.setItem(DB_KEY, JSON.stringify(expenses));
+      } catch (err) {
+        console.error('Storage error:', err);
+      }
+      updateStatistics();
+    }
+
+    function updateSyncStatusBadge() {
+      const cfg = getStoredConfig();
+      const dot = document.getElementById('syncDot');
+      const text = document.getElementById('syncBadgeText');
+      if (cfg.webhookUrl) {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+        text.textContent = 'Cloud Synced';
+      } else {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+        text.textContent = 'Local Only';
+      }
+    }
+
+    function setupCategoryChips() {
+      const chips = document.querySelectorAll('.cat-chip');
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          chips.forEach(c => {
+            c.classList.remove('bg-lenco-card', 'border-lenco-red', 'text-white', 'shadow-md');
+            c.classList.add('bg-lenco-surface/60', 'border-lenco-border', 'text-slate-200');
+          });
+          chip.classList.remove('bg-lenco-surface/60', 'border-lenco-border', 'text-slate-200');
+          chip.classList.add('bg-lenco-card', 'border-lenco-red', 'text-white', 'shadow-md');
+          selectedCategory = chip.getAttribute('data-cat');
+          playBeep(450, 0.03);
+          triggerHaptic();
+        });
+      });
+      if (chips[0]) {
+        chips[0].classList.remove('bg-lenco-surface/60', 'border-lenco-border', 'text-slate-200');
+        chips[0].classList.add('bg-lenco-card', 'border-lenco-red', 'text-white', 'shadow-md');
+      }
+    }
+
+    function setupPayMethodToggle() {
+      const btnCash = document.getElementById('payMethodCash');
+      const btnCheck = document.getElementById('payMethodCheck');
+
+      btnCash.addEventListener('click', () => {
+        selectedPayMethod = 'Cash';
+        btnCash.className = 'pay-toggle py-1.5 rounded-lg text-xs font-semibold transition bg-lenco-card text-white border border-lenco-border shadow';
+        btnCheck.className = 'pay-toggle py-1.5 rounded-lg text-xs font-semibold text-slate-400 transition';
+        playBeep(500, 0.02);
+      });
+
+      btnCheck.addEventListener('click', () => {
+        selectedPayMethod = 'Company Check / Card';
+        btnCheck.className = 'pay-toggle py-1.5 rounded-lg text-xs font-semibold transition bg-lenco-card text-white border border-lenco-border shadow';
+        btnCash.className = 'pay-toggle py-1.5 rounded-lg text-xs font-semibold text-slate-400 transition';
+        playBeep(500, 0.02);
+      });
+    }
+
+    function setupPresetButtons() {
+      const amountInput = document.getElementById('amountInput');
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const addVal = parseFloat(btn.getAttribute('data-val'));
+          const current = parseFloat(amountInput.value) || 0;
+          amountInput.value = (current + addVal).toFixed(3);
+          playBeep(520, 0.02);
+          triggerHaptic();
+        });
+      });
+
+      document.getElementById('clearAmountBtn').addEventListener('click', () => {
+        amountInput.value = '';
+        playBeep(320, 0.03);
+      });
+    }
+
+    function setupFilterTabs() {
+      const tabs = document.querySelectorAll('.filter-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => {
+            t.classList.remove('bg-lenco-card', 'text-white', 'border', 'border-lenco-border');
+            t.classList.add('text-slate-400');
+          });
+          tab.classList.remove('text-slate-400');
+          tab.classList.add('bg-lenco-card', 'text-white', 'border', 'border-lenco-border');
+          currentFilter = tab.getAttribute('data-filter');
+          renderLedger();
+        });
+      });
+    }
+
+    function handleRecordExpense() {
+      const amountInput = document.getElementById('amountInput');
+      const vendorNote = document.getElementById('vendorNote');
+      const dateField = document.getElementById('entryDateTime');
+
+      const rawAmount = parseFloat(amountInput.value);
+      if (isNaN(rawAmount) || rawAmount <= 0) {
+        showToast('Please enter a valid amount in TND', false);
+        playBeep(300, 0.08);
+        return;
+      }
+
+      const timestamp = dateField.value ? new Date(dateField.value) : new Date();
+
+      const newRecord = {
+        id: 'LNC-' + Date.now().toString(36).toUpperCase(),
+        amount: rawAmount,
+        category: selectedCategory,
+        paymentMethod: selectedPayMethod,
+        note: vendorNote.value.trim() || 'General Expense',
+        createdAt: timestamp.toISOString()
+      };
+
+      expenses.unshift(newRecord);
+      persistData();
+      renderLedger();
+
+      amountInput.value = '';
+      vendorNote.value = '';
+      resetDateTimeField();
+
+      playBeep(880, 0.06);
+      triggerHaptic();
+      showToast(`${rawAmount.toFixed(3)} TND logged!`);
+
+      autoPushWebhook(newRecord);
+    }
+
+    window.deleteExpense = function(id) {
+      expenses = expenses.filter(item => item.id !== id);
+      persistData();
+      renderLedger();
+      playBeep(350, 0.04);
+      showToast('Record deleted');
+    };
+
+    function updateStatistics() {
+      const now = new Date();
+      let todaySum = 0;
+      let weekSum = 0;
+      let monthSum = 0;
+
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const day = now.getDay() || 7;
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - day + 1);
+      startOfWeek.setHours(0, 0, 0, 0);
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      expenses.forEach(item => {
+        const itemDate = new Date(item.createdAt);
+        const amt = item.amount || 0;
+
+        if (itemDate >= startOfToday) todaySum += amt;
+        if (itemDate >= startOfWeek) weekSum += amt;
+        if (itemDate >= startOfMonth) monthSum += amt;
+      });
+
+      document.getElementById('statToday').textContent = todaySum.toFixed(3);
+      document.getElementById('statWeek').textContent = weekSum.toFixed(3);
+      document.getElementById('statMonth').textContent = monthSum.toFixed(3);
+    }
+
+    function renderLedger() {
+      const container = document.getElementById('expenseList');
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const filtered = expenses.filter(item => {
+        if (currentFilter === 'today') {
+          return new Date(item.createdAt) >= startOfToday;
+        } else if (currentFilter === 'fuel') {
+          return item.category === 'Fuel & Transport';
+        } else if (currentFilter === 'equipment') {
+          return item.category === 'Equipment & Parts';
+        }
+        return true;
+      });
+
+      document.getElementById('recordCount').textContent = `${filtered.length} Entries`;
+
+      if (!filtered.length) {
+        container.innerHTML = `
+          <div class="py-8 text-center text-slate-500 text-xs border border-dashed border-lenco-border/60 rounded-2xl bg-lenco-surface/30">
+            <i data-lucide="receipt-text" class="w-6 h-6 mx-auto mb-2 text-slate-600"></i>
+            No records found for current filter.
+          </div>
+        `;
+        refreshIcons();
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const d = new Date(item.createdAt);
+        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        return `
+          <div class="p-3 bg-lenco-surface/80 border border-lenco-border/70 rounded-2xl flex items-center justify-between gap-3 hover:border-lenco-red/40 transition">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-9 h-9 rounded-xl bg-lenco-card border border-lenco-border flex items-center justify-center text-sm shrink-0">
+                ${getCategoryEmoji(item.category)}
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-xs font-semibold text-white truncate">${escapeHtml(item.note)}</h4>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                  <span>${escapeHtml(item.category)}</span>
+                  <span>•</span>
+                  <span>${dateStr}, ${timeStr}</span>
+                  <span>•</span>
+                  <span class="text-slate-400 font-mono">${escapeHtml(item.paymentMethod.split(' ')[0])}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <div class="text-right">
+                <div class="text-sm font-bold font-mono text-white">${item.amount.toFixed(3)}</div>
+                <div class="text-[9px] text-lenco-red font-mono font-bold leading-none">TND</div>
+              </div>
+              <button onclick="deleteExpense('${item.id}')" class="p-1.5 text-slate-500 hover:text-red-400 rounded-lg transition active:scale-90" title="Delete">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      refreshIcons();
+    }
+
+    function getCategoryEmoji(cat) {
+      switch(cat) {
+        case 'Fuel & Transport': return '⛽';
+        case 'Equipment & Parts': return '🔧';
+        case 'Site Meals': return '🍽️';
+        case 'Logistics & Freight': return '📦';
+        case 'Office & Admin': return '🏢';
+        default: return '⚙️';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    function exportToCSV() {
+      if (!expenses.length) {
+        showToast('No expenses to export!', false);
+        return;
+      }
+
+      const headers = ['ID', 'Date', 'Time', 'Amount (TND)', 'Category', 'Payment Method', 'Note / Vendor'];
+      const rows = expenses.map(item => {
+        const d = new Date(item.createdAt);
+        const dateStr = d.toISOString().split('T')[0];
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        return [
+          `"${item.id}"`,
+          `"${dateStr}"`,
+          `"${timeStr}"`,
+          item.amount.toFixed(3),
+          `"${item.category.replace(/"/g, '""')}"`,
+          `"${item.paymentMethod.replace(/"/g, '""')}"`,
+          `"${item.note.replace(/"/g, '""')}"`
+        ];
+      });
+
+      const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      const todayISO = new Date().toISOString().slice(0, 10);
+      link.setAttribute('download', `LENCO_Expenses_${todayISO}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('Excel/CSV File Downloaded!');
+      playBeep(700, 0.05);
+    }
+
+    async function pushToWebhook() {
+      const config = getStoredConfig();
+      if (!config.webhookUrl) {
+        openConfigModal();
+        showToast('Set your Google Sheet/n8n Webhook URL first', false);
+        return;
+      }
+
+      if (!expenses.length) {
+        showToast('No expenses to push!', false);
+        return;
+      }
+
+      showToast('Syncing with Sheet...');
+      try {
+        const payload = {
+          client: 'LENCO Mobile PWA',
+          worker: config.workerName || 'Field Device',
+          timestamp: new Date().toISOString(),
+          totalEntries: expenses.length,
+          records: expenses
+        };
+
+        const res = await fetch(config.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok || res.type === 'opaque') {
+          showToast('Synced with Google Sheet!');
+          playBeep(900, 0.07);
+        } else {
+          showToast(`Server status: ${res.status}`, false);
+        }
+      } catch (err) {
+        showToast('Sync failed: Check URL / CORS', false);
+      }
+    }
+
+    async function autoPushWebhook(record) {
+      const config = getStoredConfig();
+      if (!config.webhookUrl) return;
+
+      try {
+        await fetch(config.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'NEW_EXPENSE',
+            worker: config.workerName || 'Field Device',
+            record: record
+          })
+        });
+      } catch (e) {}
+    }
+
+    function getStoredConfig() {
+      try {
+        return JSON.parse(localStorage.getItem(CFG_KEY)) || {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function openConfigModal() {
+      const cfg = getStoredConfig();
+      document.getElementById('webhookUrlInput').value = cfg.webhookUrl || '';
+      document.getElementById('workerNameInput').value = cfg.workerName || '';
+      document.getElementById('configModal').classList.remove('hidden');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.add('hidden');
+    }
+
+    function saveConfig() {
+      const webhookUrl = document.getElementById('webhookUrlInput').value.trim();
+      const workerName = document.getElementById('workerNameInput').value.trim();
+      localStorage.setItem(CFG_KEY, JSON.stringify({ webhookUrl, workerName }));
+      closeConfigModal();
+      updateSyncStatusBadge();
+      showToast('Settings Saved!');
+    }
+
+    function clearAllLedger() {
+      if (confirm('Clear all local expenses from this terminal?')) {
+        expenses = [];
+        persistData();
+        renderLedger();
+        closeConfigModal();
+        showToast('Ledger wiped clean');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      resetDateTimeField();
+      setupCategoryChips();
+      setupPayMethodToggle();
+      setupPresetButtons();
+      setupFilterTabs();
+      loadData();
+      refreshIcons();
+
+      document.getElementById('recordExpenseBtn').addEventListener('click', handleRecordExpense);
+      document.getElementById('exportExcelBtn').addEventListener('click', exportToCSV);
+      document.getElementById('syncWebhookBtn').addEventListener('click', pushToWebhook);
+
+      document.getElementById('configBtn').addEventListener('click', openConfigModal);
+      document.getElementById('closeConfigBtn').addEventListener('click', closeConfigModal);
+      document.getElementById('saveConfigBtn').addEventListener('click', saveConfig);
+      document.getElementById('clearAllLogsBtn').addEventListener('click', clearAllLedger);
+
+      const pwaModal = document.getElementById('pwaHelpModal');
+      document.getElementById('pwaHelpBtn').addEventListener('click', () => pwaModal.classList.remove('hidden'));
+      document.getElementById('closePwaHelpBtn').addEventListener('click', () => pwaModal.classList.add('hidden'));
+      document.getElementById('dismissHelpBtn').addEventListener('click', () => pwaModal.classList.add('hidden'));
+
+      document.getElementById('amountInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleRecordExpense();
+      });
+    });
+  </script>
+</body>
+</html>
